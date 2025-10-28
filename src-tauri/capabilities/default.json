@@ -1,0 +1,51 @@
+{
+  "identifier": "default",
+  "description": "Default permissions for the application",
+  "windows": ["*"],
+  "permissions": [
+    "dialog:allow-save",
+    "dialog:allow-open",
+    "dialog:allow-ask",
+    "dialog:allow-message",
+    "dialog:allow-confirm",
+    "fs:allow-read-text-file",
+    "fs:allow-write-text-file",
+    "fs:allow-read-file",
+    "fs:allow-write-file",
+    "fs:allow-read-dir",
+    "fs:allow-create",
+    "fs:allow-remove",
+    "fs:allow-rename",
+    "fs:allow-exists",
+    "fs:allow-appcache-write",
+    "fs:allow-appcache-write-recursive",
+    "core:path:allow-resolve-directory",
+    "core:path:allow-join",
+    "notification:allow-is-permission-granted",
+    "notification:allow-request-permission",
+    "notification:allow-show",
+    "shell:allow-open",
+    "shell:allow-execute",
+    "core:webview:allow-print",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "open",
+          "cmd": "open",
+          "args": true
+        },
+        {
+          "name": "osascript",
+          "cmd": "osascript",
+          "args": true
+        }
+      ]
+    },
+    "store:allow-get",
+    "store:allow-set",
+    "store:allow-save",
+    "store:allow-load",
+    "store:allow-delete"
+  ]
+}

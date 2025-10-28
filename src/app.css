@@ -1,0 +1,180 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg-primary: #0f1419;
+  --bg-card: #1a2332;
+  --bg-secondary: #2d3e50;
+  --border: #2d3e50;
+  --border-hover: #3d5068;
+  
+  --btn-primary: #5a8fc4;
+  --btn-primary-hover: #4a7fb4;
+  --btn-secondary: #2d3e50;
+  --btn-secondary-hover: #1a2332;
+  
+  --text-primary: #e0e6ed;
+  --text-secondary: #a8c5e0;
+  --text-tertiary: #8b9eb3;
+  --text-placeholder: #6b7d8f;
+  
+  --accent: #5a8fc4;
+  --accent-hover: #4a7fb4;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.btn-primary {
+  background: var(--btn-primary);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-primary:hover {
+  background: var(--btn-primary-hover);
+  box-shadow: 0 4px 12px rgba(90, 143, 196, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--btn-secondary);
+  color: var(--text-secondary);
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-secondary:hover {
+  background: var(--btn-secondary-hover);
+  border-color: var(--border-hover);
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.input-dark {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-family: 'Inter', sans-serif;
+  transition: border-color 0.2s;
+}
+
+.input-dark:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.input-dark::placeholder {
+  color: var(--text-placeholder);
+}
+
+.tab-button {
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  background: rgba(26, 35, 50, 0.3);
+  border-left: 4px solid rgba(90, 143, 196, 0.2);
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+  border-radius: 0 0.5rem 0.5rem 0;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.tab-button:hover {
+  color: var(--text-secondary);
+  background: var(--bg-card);
+}
+
+.tab-button-active {
+  border-left-color: var(--accent);
+  color: var(--text-secondary);
+  font-weight: 600;
+  background: var(--bg-card);
+}
+
+select.input-dark {
+  cursor: pointer;
+}
+
+textarea.input-dark {
+  resize: vertical;
+  min-height: 80px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: rgba(26, 35, 50, 0.5);
+}
+
+tr:hover {
+  background: rgba(26, 35, 50, 0.3);
+}
+
+/* Botón FLAD violeta con gradiente irisado */
+.btn-flad {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  border: none;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  transition: all 0.2s ease;
+}
+
+.btn-flad:hover {
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+  transform: translateY(-2px);
+}
+
+.btn-flad:active {
+  transform: translateY(0);
+}

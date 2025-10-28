@@ -1,0 +1,418 @@
+<script>
+  import { onMount } from 'svelte';
+  import { db } from '$lib/api/tauri';
+  import { getRequerimientosSinOT, crearOrdenTrabajo } from '$lib/utils/db-helpers.js';
+  import { formatearNumero, calcularMontoTotalSeleccionados } from '$lib/utils/calculos.js';
+  import { enriquecerRequerimientos } from '$lib/utils/enriquecimiento.js';
+  import SelectorJardinModerno from './SelectorJardinModerno.svelte';
+
+  let jardines = [];
+  let jardinSeleccionado = '';
+  let requerimientos = [];
+  let seleccionados = new Set();
+  let cargando = false;
+  let mensaje = '';
+  let sortColumn = null;
+  let sortDirection = 'asc';
+
+  onMount(async () => {
+    // jardines ahora se cargan en SelectorJardinModerno
+  });
+
+  async function cargarRequerimientos() {
+    if (!jardinSeleccionado) {
+      requerimientos = [];
+      return;
+    }
+    
+    cargando = true;
+    const reqs = await getRequerimientosSinOT({ jardinCodigo: jardinSeleccionado });
+    requerimientos = await enriquecerRequerimientos(reqs);
+    seleccionados.clear();
+    cargando = false;
+  }
+
+  function toggleSeleccion(id) {
+    if (seleccionados.has(id)) {
+      seleccionados.delete(id);
+    } else {
+      seleccionados.add(id);
+    }
+    seleccionados = seleccionados; // trigger reactivity
+  }
+
+  function seleccionarTodos() {
+    if (requerimientos.length === seleccionados.size) {
+      seleccionados.clear();
+    } else {
+      requerimientos.forEach(r => seleccionados.add(r.id));
+    }
+    seleccionados = seleccionados;
+  }
+
+  async function generarOT() {
+    if (seleccionados.size === 0) {
+      mensaje = '⚠️ Selecciona al menos un requerimiento';
+      setTimeout(() => mensaje = '', 3000);
+      return;
+    }
+
+    try {
+      cargando = true;
+      mensaje = '';
+      const ot_id = await crearOrdenTrabajo(jardinSeleccionado, Array.from(seleccionados));
+      mensaje = '✅ Orden de Trabajo creada exitosamente';
+      
+      await cargarRequerimientos();
+      setTimeout(() => mensaje = '', 3000);
+    } catch (error) {
+      console.error('❌ Error al crear OT:', error);
+      const errorMsg = error?.message || error?.toString() || 'Error desconocido';
+      mensaje = `❌ Error al crear OT: ${errorMsg}`;
+    } finally {
+      cargando = false;
+    }
+  }
+
+  function formatearFecha(fechaString) {
+    if (!fechaString) return '-';
+    const fecha = fechaString.split('T')[0];
+    const [año, mes, dia] = fecha.split('-');
+    return `${dia}/${mes}/${año}`;
+  }
+
+  function truncarDescripcion(texto) {
+    if (!texto) return '-';
+    const palabras = texto.split(' ');
+    return palabras.slice(0, 3).join(' ') + (palabras.length > 3 ? '...' : '');
+  }
+
+  function truncarPartida(nombre) {
+    if (!nombre) return '-';
+    const palabras = nombre.split(' ');
+    return palabras.slice(0, 3).join(' ') + (palabras.length > 3 ? '...' : '');
+  }
+
+  function sortBy(column) {
+    if (sortColumn === column) {
+      sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortColumn = column;
+      sortDirection = 'asc';
+    }
+    // Force trigger
+    sortColumn = sortColumn;
+  }
+
+  $: sortedRequerimientos = !sortColumn ? requerimientos : [...requerimientos].sort((a, b) => {
+    let valA, valB;
+    let result = 0;
+    
+    switch(sortColumn) {
+      case 'fecha':
+        valA = new Date(a.fechaInicio).getTime();
+        valB = new Date(b.fechaInicio).getTime();
+        result = valA - valB;
+        break;
+      case 'recinto':
+        valA = (a.recinto || '').toLowerCase();
+        valB = (b.recinto || '').toLowerCase();
+        result = valA.localeCompare(valB);
+        break;
+      case 'partida':
+        valA = (a.partidaNombre || '').toLowerCase();
+        valB = (b.partidaNombre || '').toLowerCase();
+        result = valA.localeCompare(valB);
+        break;
+      case 'cantidad':
+        valA = parseFloat(a.cantidad) || 0;
+        valB = parseFloat(b.cantidad) || 0;
+        result = valA - valB;
+        break;
+      case 'precio':
+        valA = parseFloat(a.precioTotal) || 0;
+        valB = parseFloat(b.precioTotal) || 0;
+        result = valA - valB;
+        break;
+    }
+    
+    return sortDirection === 'asc' ? result : -result;
+  });
+
+  $: montoTotal = calcularMontoTotalSeleccionados(requerimientos, seleccionados);
+</script>
+
+<div class="container">
+  <div class="header">
+    <h2>Crear Orden de Trabajo</h2>
+    
+    <div class="filtro">
+      <label>Jardín:</label>
+      <SelectorJardinModerno bind:value={jardinSeleccionado} onChange={cargarRequerimientos} />
+    </div>
+  </div>
+
+  {#if mensaje}
+    <div class="mensaje {mensaje.includes('✅') ? 'exito' : 'error'}">{mensaje}</div>
+  {/if}
+
+  {#if cargando}
+    <p class="cargando">Cargando...</p>
+  {:else if !jardinSeleccionado}
+    <p class="placeholder">Selecciona un jardín para ver requerimientos pendientes de orden</p>
+  {:else if jardinSeleccionado}
+    <div class="acciones">
+      <button class="generar" on:click={generarOT} disabled={seleccionados.size === 0 || cargando}>
+        {cargando ? 'Generando...' : `Generar OT (${seleccionados.size} seleccionados)`}
+      </button>
+      <div class="total">Total Seleccionado: ${formatearNumero(montoTotal)}</div>
+    </div>
+
+    {#if cargando}
+      <p>Cargando requerimientos...</p>
+    {:else if requerimientos.length === 0}
+      <p class="vacio">No hay requerimientos disponibles sin asignar para este jardín</p>
+    {:else}
+      <div class="tabla-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th><input type="checkbox" on:change={seleccionarTodos} checked={requerimientos.length === seleccionados.size && requerimientos.length > 0} /></th>
+              <th class="sortable" on:click={() => sortBy('recinto')}>
+                Zona
+                {#if sortColumn === 'recinto'}
+                  <span class="sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                {/if}
+              </th>
+              <th class="sortable" on:click={() => sortBy('partida')}>
+                Item - Partida
+                {#if sortColumn === 'partida'}
+                  <span class="sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                {/if}
+              </th>
+              <th>Descripción</th>
+              <th class="sortable" on:click={() => sortBy('cantidad')}>
+                Cant.
+                {#if sortColumn === 'cantidad'}
+                  <span class="sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                {/if}
+              </th>
+              <th class="sortable" on:click={() => sortBy('fecha')}>
+                F.Inicio
+                {#if sortColumn === 'fecha'}
+                  <span class="sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                {/if}
+              </th>
+              <th>Plazo</th>
+              <th>F.Límite</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each sortedRequerimientos as req}
+              <tr class:seleccionado={seleccionados.has(req.id)}>
+                <td>
+                  <input 
+                    type="checkbox" 
+                    checked={seleccionados.has(req.id)} 
+                    on:change={() => toggleSeleccion(req.id)}
+                  />
+                </td>
+                <td>{req.recinto}</td>
+                <td title="{req.partidaItem} - {req.partidaNombre}">{req.partidaItem} - {truncarPartida(req.partidaNombre)}</td>
+                <td title={req.descripcion}>{truncarDescripcion(req.descripcion)}</td>
+                <td>{formatearNumero(req.cantidad)} {req.partidaUnidad || ''}</td>
+                <td>{formatearFecha(req.fechaInicio)}</td>
+                <td>{req.plazoDias}</td>
+                <td>{req.fechaLimite ? formatearFecha(req.fechaLimite) : '-'}</td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+    {/if}
+  {/if}
+</div>
+
+<style>
+  .container { 
+    padding: 0 2rem 2rem 2rem;
+  }
+  
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  h2 { 
+    color: #a8c5e0; 
+    margin: 0;
+  }
+
+  .filtro {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .filtro label {
+    color: #8b9eb3;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  select {
+    padding: 0.75rem;
+    background: #0f1419;
+    border: 1px solid #2d3e50;
+    border-radius: 6px;
+    color: #a8c5e0;
+    font-family: 'Inter', sans-serif;
+    min-width: 300px;
+  }
+
+  .cargando {
+    text-align: center;
+    color: #8b9eb3;
+    padding: 2rem;
+  }
+
+  .placeholder {
+    text-align: center;
+    color: #6b7d8f;
+    padding: 4rem 2rem;
+    background: #1a2332;
+    border: 2px dashed #2d3e50;
+    border-radius: 8px;
+    font-size: 1.05rem;
+  }
+
+  .mensaje {
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    font-weight: 500;
+  }
+
+  .mensaje.exito {
+    background: rgba(76, 175, 80, 0.2);
+    color: #81c784;
+    border: 1px solid #4caf50;
+  }
+
+  .mensaje.error {
+    background: rgba(244, 67, 54, 0.2);
+    color: #e57373;
+    border: 1px solid #f44336;
+  }
+
+  .acciones {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    align-items: center;
+  }
+
+  button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+    background: #2d3e50;
+    color: #a8c5e0;
+  }
+
+  button:hover:not(:disabled) {
+    background: #3a4f66;
+    transform: translateY(-1px);
+  }
+
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  button.generar {
+    background: #5a8fc4;
+    color: white;
+  }
+
+  button.generar:hover:not(:disabled) {
+    background: #4a7fb4;
+  }
+
+  .total {
+    margin-left: auto;
+    color: #a8c5e0;
+    font-weight: 600;
+    font-size: 1.1rem;
+  }
+
+  .vacio {
+    text-align: center;
+    color: #8b9eb3;
+    padding: 2rem;
+  }
+
+  .tabla-wrapper {
+    overflow-x: auto;
+    background: #1a2332;
+    border-radius: 8px;
+    padding: 1rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead th {
+    background: #0f1419;
+    color: #8b9eb3;
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #2d3e50;
+    position: relative;
+  }
+
+  thead th.sortable {
+    cursor: pointer;
+    user-select: none;
+  }
+
+  thead th.sortable:hover {
+    background: #1a2332;
+    color: #a8c5e0;
+  }
+
+  .sort-icon {
+    margin-left: 0.5rem;
+    font-size: 0.8rem;
+    color: #5a8fc4;
+  }
+
+  tbody td {
+    padding: 0.75rem 1rem;
+    color: #a8c5e0;
+    border-bottom: 1px solid #2d3e50;
+  }
+
+  tbody tr:hover {
+    background: #0f1419;
+  }
+
+  tbody tr.seleccionado {
+    background: rgba(90, 143, 196, 0.2);
+  }
+
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+</style>
