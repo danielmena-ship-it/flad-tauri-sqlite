@@ -449,7 +449,7 @@
 
   .firma-imagen {
     position: absolute;
-    bottom: 75px;
+    bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
     max-width: 260px;
@@ -458,7 +458,7 @@
 
   .firma-placeholder {
     position: absolute;
-    bottom: 75px;
+    bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
     color: #999;
@@ -818,7 +818,7 @@
 
     .firma-imagen {
       position: absolute !important;
-      bottom: 75px !important;
+      bottom: 30px !important;
       left: 50% !important;
       transform: translateX(-50%) !important;
       max-width: 3.9cm;

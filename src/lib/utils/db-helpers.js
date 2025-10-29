@@ -4,6 +4,7 @@
  */
 import { db } from '$lib/api/tauri';
 import { calcularPlazoTotal, calcularFechaLimite, calcularDiasAtraso, calcularMulta, calcularAPago } from './calculos';
+import { enriquecerRequerimientos } from './enriquecimiento.js';  // ✅ FIXED: import missing
 
 // ============================================
 // EXPORTS PRINCIPALES
@@ -107,7 +108,7 @@ export async function guardarFechasRecepcion(requerimientos) {
     try {
       await invoke('actualizar_fecha_recepcion', {
         id: req.id,
-        fechaRecepcion: req.fechaRecepcion
+        fecha_recepcion: req.fechaRecepcion  // ✅ FIXED: snake_case para match con Tauri command
       });
       console.log(`  ✅ [DB-HELPER] ID ${req.id} guardado exitosamente`);
     } catch (error) {

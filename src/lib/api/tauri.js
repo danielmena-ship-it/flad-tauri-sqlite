@@ -37,30 +37,22 @@ export const db = {
   jardines: {
     getAll: async () => toCamel(await invoke('get_jardines')),
     getByCode: async (codigo) => toCamel(await invoke('get_jardin_by_codigo', { codigo })),
-    add: (jardin) => invoke('add_jardin', {
-      codigo: jardin.codigo,
-      nombre: jardin.nombre
-    })
+    add: (jardin) => invoke('add_jardin', toSnake(jardin))
   },
 
   // Partidas
   partidas: {
     getAll: async () => toCamel(await invoke('get_partidas')),
-    add: (partida) => invoke('add_partida', {
-      item: partida.item,
-      partida: partida.partida,
-      unidad: partida.unidad || null,
-      precioUnitario: partida.precioUnitario || 0
-    })
+    add: (partida) => invoke('add_partida', toSnake(partida))
   },
 
   // Requerimientos
   requerimientos: {
     getAll: async () => toCamel(await invoke('get_requerimientos')),
-    add: (req) => invoke('add_requerimiento', req),
+    add: (req) => invoke('add_requerimiento', toSnake(req)),
     update: (id, data) => {
       console.log('🚀 [TAURI-API] update_requerimiento:', { id, data });
-      return invoke('update_requerimiento', { id, ...data });
+      return invoke('update_requerimiento', { id, ...toSnake(data) });
     },
     delete: (id) => invoke('delete_requerimiento', { id })
   },
@@ -68,64 +60,46 @@ export const db = {
   // Recintos
   recintos: {
     getAll: async () => toCamel(await invoke('get_recintos')),
-    getByJardin: async (jardinCodigo) => toCamel(await invoke('get_recintos_by_jardin', { jardinCodigo })),
-    add: (recinto) => invoke('add_recinto', {
-      jardin_codigo: recinto.jardinCodigo,
-      nombre: recinto.nombre
-    })
+    getByJardin: async (jardinCodigo) => toCamel(await invoke('get_recintos_by_jardin', { jardin_codigo: jardinCodigo })),
+    add: (recinto) => invoke('add_recinto', toSnake(recinto))
   },
 
   // Órdenes de Trabajo
   ordenesTrabajo: {
     getAll: async () => toCamel(await invoke('get_ordenes_trabajo')),
-    getDetalle: async (otId) => toCamel(await invoke('get_orden_trabajo_detalle', { otId })),
+    getDetalle: async (otId) => toCamel(await invoke('get_orden_trabajo_detalle', { ot_id: otId })),
     crear: (data) => {
       console.log('🔍 [TAURI] crear OT - data recibida:', data);
-      const params = {
-        jardin_codigo: data.jardinCodigo,
-        fecha_creacion: data.fechaCreacion,
-        observaciones: data.observaciones || null,
-        requerimiento_ids: data.requerimientoIds
-      };
+      const params = toSnake(data);
       console.log('📤 [TAURI] crear OT - params enviados:', params);
       return invoke('crear_orden_trabajo', params);
     },
     update: (otId, data) => {
       console.log('🔍 [TAURI] update OT - data recibida:', { otId, data });
-      const params = {
-        otId: otId,
-        requerimientoIds: data.requerimientoIds,
-        observaciones: data.observaciones || null
-      };
+      const params = { ot_id: otId, ...toSnake(data) };
       console.log('📤 [TAURI] update OT - params enviados:', params);
       return invoke('update_orden_trabajo', params);
     },
-    eliminar: (id) => invoke('eliminar_orden_trabajo', { otId: id })
+    eliminar: (id) => invoke('eliminar_orden_trabajo', { ot_id: id })
   },
 
   // Informes de Pago
   informesPago: {
     getAll: async () => toCamel(await invoke('get_informes_pago')),
-    getDetalle: async (informeId) => toCamel(await invoke('get_informe_pago_detalle', { informeId })),
-    getRequerimientosParaInforme: async (jardinCodigo) => toCamel(await invoke('get_requerimientos_para_informe', { jardinCodigo })),
-    crear: (data) => invoke('crear_informe_pago', {
-      jardinCodigo: data.jardinCodigo,      // Tauri 2.x convierte automáticamente a snake_case
-      fechaCreacion: data.fechaCreacion,    // Tauri 2.x convierte automáticamente a snake_case
-      observaciones: data.observaciones || null,
-      requerimientos: data.requerimientos
-    }),
+    getDetalle: async (informeId) => toCamel(await invoke('get_informe_pago_detalle', { informe_id: informeId })),
+    getRequerimientosParaInforme: async (jardinCodigo) => toCamel(await invoke('get_requerimientos_para_informe', { jardin_codigo: jardinCodigo })),
+    crear: (data) => invoke('crear_informe_pago', toSnake(data)),
     update: (informeId, data) => invoke('update_informe_pago', {
-      informeId,
-      requerimientos: data.requerimientos,
-      observaciones: data.observaciones || null
+      informe_id: informeId,
+      ...toSnake(data)
     }),
-    eliminar: (id) => invoke('eliminar_informe_pago', { informeId: id })
+    eliminar: (id) => invoke('eliminar_informe_pago', { informe_id: id })
   },
 
   // Configuración
   configuracion: {
     get: async () => toCamel(await invoke('get_configuracion')),
-    update: (data) => invoke('update_configuracion', data)
+    update: (data) => invoke('update_configuracion', toSnake(data))
   },
 
   // Importar
@@ -138,10 +112,10 @@ export const db = {
       filePath, sheetName, tipo 
     }),
     catalogoXlsxBytes: (fileBytes) => invoke('importar_catalogo_xlsx_bytes', { 
-      fileBytes
+      file_bytes: fileBytes  // ✅ FIXED: snake_case para match con comando Tauri
     }),
     baseDatosCompleta: (jsonStr) => invoke('importar_base_datos_completa', {
-      jsonStr: typeof jsonStr === 'string' ? jsonStr : JSON.stringify(jsonStr)
+      json_str: typeof jsonStr === 'string' ? jsonStr : JSON.stringify(jsonStr)  // ✅ FIXED: snake_case
     }),
     firma: (imagenBase64) => invoke('importar_firma', { imagenBase64 }),
     getFirma: async () => toCamel(await invoke('get_firma')),

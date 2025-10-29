@@ -25,7 +25,7 @@
     
     // Cargar requerimientos disponibles (sin informe) del mismo jardín
     const reqsDisponibles = await getRequerimientosParaInformePago({ 
-      jardin_codigo: informe.jardinCodigo 
+      jardinCodigo: informe.jardinCodigo  // ✅ FIXED: camelCase para match con db-helpers
     });
     requerimientosDisponibles = await enriquecerRequerimientos(reqsDisponibles);
     

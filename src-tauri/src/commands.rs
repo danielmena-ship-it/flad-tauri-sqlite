@@ -52,7 +52,7 @@ pub async fn get_partidas(db: State<'_, DbState>) -> Result<Vec<Partida>, String
         .map_err(|e| e.to_string())
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn add_partida(
     db: State<'_, DbState>,
     item: String,
@@ -129,20 +129,20 @@ pub async fn get_requerimientos(db: State<'_, DbState>) -> Result<Vec<Requerimie
     .map_err(|e| e.to_string())
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn add_requerimiento(
     db: State<'_, DbState>,
-    #[allow(non_snake_case)] jardinCodigo: String,
+    jardin_codigo: String,
     recinto: Option<String>,
-    #[allow(non_snake_case)] partidaItem: String,
+    partida_item: String,
     cantidad: f64,
-    #[allow(non_snake_case)] precioUnitario: f64,
-    #[allow(non_snake_case)] fechaInicio: String,
-    #[allow(non_snake_case)] fechaRegistro: String,
-    #[allow(non_snake_case)] plazoDias: i32,
+    precio_unitario: f64,
+    fecha_inicio: String,
+    fecha_registro: String,
+    plazo_dias: i32,
     descripcion: Option<String>,
 ) -> Result<i64, String> {
-    let precio_total = cantidad * precioUnitario;
+    let precio_total = cantidad * precio_unitario;
     
     let result = sqlx::query(
         "INSERT INTO requerimientos 
@@ -150,15 +150,15 @@ pub async fn add_requerimiento(
           fecha_inicio, fecha_registro, plazo_dias, descripcion, estado) 
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendiente')"
     )
-    .bind(&jardinCodigo)
+    .bind(&jardin_codigo)
     .bind(&recinto)
-    .bind(&partidaItem)
+    .bind(&partida_item)
     .bind(cantidad)
-    .bind(precioUnitario)
+    .bind(precio_unitario)
     .bind(precio_total)
-    .bind(&fechaInicio)
-    .bind(&fechaRegistro)
-    .bind(plazoDias)
+    .bind(&fecha_inicio)
+    .bind(&fecha_registro)
+    .bind(plazo_dias)
     .bind(&descripcion)
     .execute(&*db.pool)
     .await
@@ -167,36 +167,36 @@ pub async fn add_requerimiento(
     Ok(result.last_insert_rowid())
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn update_requerimiento(
     db: State<'_, DbState>,
     id: i64,
     descripcion: Option<String>,
     observaciones: Option<String>,
     cantidad: Option<f64>,
-    #[allow(non_snake_case)] precioUnitario: Option<f64>,
-    #[allow(non_snake_case)] fechaInicio: Option<String>,
-    #[allow(non_snake_case)] plazoDias: Option<i32>,
-    #[allow(non_snake_case)] plazoAdicional: Option<i32>,
-    #[allow(non_snake_case)] fechaRecepcion: Option<String>,
-    #[allow(non_snake_case)] partidaItem: Option<String>,
+    precio_unitario: Option<f64>,
+    fecha_inicio: Option<String>,
+    plazo_dias: Option<i32>,
+    plazo_adicional: Option<i32>,
+    fecha_recepcion: Option<String>,
+    partida_item: Option<String>,
 ) -> Result<(), String> {
     
-    println!("🔧 update_requerimiento ID={} plazoDias={:?} plazoAdicional={:?}", id, plazoDias, plazoAdicional);
+    println!("🔧 update_requerimiento ID={} plazo_dias={:?} plazo_adicional={:?}", id, plazo_dias, plazo_adicional);
     
     let mut set_parts = vec![];
     
     if descripcion.is_some() { set_parts.push("descripcion = ?"); }
     if observaciones.is_some() { set_parts.push("observaciones = ?"); }
-    if partidaItem.is_some() { set_parts.push("partida_item = ?"); }
+    if partida_item.is_some() { set_parts.push("partida_item = ?"); }
     if cantidad.is_some() { set_parts.push("cantidad = ?"); }
-    if precioUnitario.is_some() { set_parts.push("precio_unitario = ?"); }
-    if fechaInicio.is_some() { set_parts.push("fecha_inicio = ?"); }
-    if plazoDias.is_some() { set_parts.push("plazo_dias = ?"); }
-    if plazoAdicional.is_some() { set_parts.push("plazo_adicional = ?"); }
-    if fechaRecepcion.is_some() { set_parts.push("fecha_recepcion = ?"); }
+    if precio_unitario.is_some() { set_parts.push("precio_unitario = ?"); }
+    if fecha_inicio.is_some() { set_parts.push("fecha_inicio = ?"); }
+    if plazo_dias.is_some() { set_parts.push("plazo_dias = ?"); }
+    if plazo_adicional.is_some() { set_parts.push("plazo_adicional = ?"); }
+    if fecha_recepcion.is_some() { set_parts.push("fecha_recepcion = ?"); }
     
-    if cantidad.is_some() || precioUnitario.is_some() {
+    if cantidad.is_some() || precio_unitario.is_some() {
         set_parts.push("precio_total = cantidad * precio_unitario");
     }
     
@@ -215,13 +215,13 @@ pub async fn update_requerimiento(
     
     if let Some(v) = descripcion { query = query.bind(v); }
     if let Some(v) = observaciones { query = query.bind(v); }
-    if let Some(v) = partidaItem { query = query.bind(v); }
+    if let Some(v) = partida_item { query = query.bind(v); }
     if let Some(v) = cantidad { query = query.bind(v); }
-    if let Some(v) = precioUnitario { query = query.bind(v); }
-    if let Some(ref v) = fechaInicio { query = query.bind(v); }
-    if let Some(ref v) = plazoDias { query = query.bind(v); }
-    if let Some(ref v) = plazoAdicional { query = query.bind(v); }
-    if let Some(v) = fechaRecepcion { query = query.bind(v); }
+    if let Some(v) = precio_unitario { query = query.bind(v); }
+    if let Some(ref v) = fecha_inicio { query = query.bind(v); }
+    if let Some(ref v) = plazo_dias { query = query.bind(v); }
+    if let Some(ref v) = plazo_adicional { query = query.bind(v); }
+    if let Some(v) = fecha_recepcion { query = query.bind(v); }
     
     query.bind(id)
         .execute(&*db.pool)
@@ -232,7 +232,7 @@ pub async fn update_requerimiento(
     Ok(())
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn actualizar_fecha_recepcion(
     db: State<'_, DbState>,
     id: i64,
@@ -303,7 +303,7 @@ pub async fn get_recintos(db: State<'_, DbState>) -> Result<Vec<Recinto>, String
         .map_err(|e| e.to_string())
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn get_recintos_by_jardin(
     db: State<'_, DbState>,
     jardin_codigo: String,
@@ -317,7 +317,7 @@ pub async fn get_recintos_by_jardin(
     .map_err(|e| e.to_string())
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn add_recinto(
     db: State<'_, DbState>,
     jardin_codigo: String,
@@ -348,7 +348,7 @@ pub async fn get_ordenes_trabajo(db: State<'_, DbState>) -> Result<Vec<OrdenTrab
     .map_err(|e| e.to_string())
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn get_orden_trabajo_detalle(
     db: State<'_, DbState>,
     ot_id: i64,
@@ -468,7 +468,7 @@ pub async fn crear_orden_trabajo(
     Ok(ot_id)
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn eliminar_orden_trabajo(
     db: State<'_, DbState>,
     ot_id: i64,
@@ -524,7 +524,7 @@ pub async fn get_informes_pago(db: State<'_, DbState>) -> Result<Vec<InformePago
     .map_err(|e| e.to_string())
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn get_informe_pago_detalle(
     db: State<'_, DbState>,
     informe_id: i64,
@@ -582,7 +582,7 @@ pub async fn get_informe_pago_detalle(
     .map_err(|e| e.to_string())
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn get_requerimientos_para_informe(
     db: State<'_, DbState>,
     jardin_codigo: String,
@@ -642,7 +642,7 @@ pub async fn get_requerimientos_para_informe(
     .map_err(|e| e.to_string())
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn crear_informe_pago(
     db: State<'_, DbState>,
     jardin_codigo: String,
@@ -723,7 +723,7 @@ pub async fn crear_informe_pago(
     Ok(informe_id)
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn eliminar_informe_pago(
     db: State<'_, DbState>,
     informe_id: i64,
@@ -775,13 +775,13 @@ pub async fn get_configuracion(db: State<'_, DbState>) -> Result<Configuracion, 
     })
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn update_configuracion(
     db: State<'_, DbState>,
     titulo: String,
     contratista: String,
-    #[allow(non_snake_case)] prefijoCorrelativo: String,
-    #[allow(non_snake_case)] itoNombre: Option<String>,
+    prefijo_correlativo: String,
+    ito_nombre: Option<String>,
 ) -> Result<(), String> {
     sqlx::query(
         "UPDATE configuracion_contrato 
@@ -790,8 +790,8 @@ pub async fn update_configuracion(
     )
     .bind(&titulo)
     .bind(&contratista)
-    .bind(&prefijoCorrelativo)
-    .bind(&itoNombre)
+    .bind(&prefijo_correlativo)
+    .bind(&ito_nombre)
     .execute(&*db.pool)
     .await
     .map_err(|e| e.to_string())?;
@@ -836,7 +836,7 @@ struct BaseDatosCompleta {
     configuracion: Option<serde_json::Value>,
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn importar_base_datos_completa(
     db: State<'_, DbState>,
     json_str: String,
@@ -1030,7 +1030,7 @@ pub async fn importar_base_datos_completa(
         counts.0, counts.1, counts.2, counts.3, counts.4, counts.5))
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn importar_catalogo_json(
     db: State<'_, DbState>,
     json_str: String,
@@ -1104,7 +1104,7 @@ pub async fn importar_catalogo_json(
     Ok(format!("{} registros importados", count))
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn importar_catalogo_csv(
     db: State<'_, DbState>,
     csv_str: String,
@@ -1155,7 +1155,7 @@ pub async fn importar_catalogo_csv(
     Ok(format!("{} registros importados", count))
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn importar_catalogo_xlsx(
     db: State<'_, DbState>,
     file_path: String,
@@ -1214,7 +1214,7 @@ pub async fn importar_catalogo_xlsx(
     Ok(format!("{} registros importados", count))
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn importar_catalogo_xlsx_bytes(
     db: State<'_, DbState>,
     file_bytes: Vec<u8>,
@@ -1344,7 +1344,7 @@ pub async fn importar_catalogo_xlsx_bytes(
     }))
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn update_orden_trabajo(
     db: State<'_, DbState>,
     ot_id: i64,
@@ -1410,7 +1410,7 @@ pub async fn update_orden_trabajo(
     Ok(())
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn update_informe_pago(
     db: State<'_, DbState>,
     informe_id: i64,

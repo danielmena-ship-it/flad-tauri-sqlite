@@ -88,6 +88,7 @@ pub struct Partida {
     pub created_at: String,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, serde::Serialize, serde::Deserialize, sqlx::FromRow)]
 pub struct Requerimiento {
     pub id: i64,
